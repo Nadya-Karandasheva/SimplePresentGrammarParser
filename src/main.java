@@ -92,10 +92,10 @@ public class main {
                 int containce = 0;
                 char left = 0;
                 while (iterator.hasNext() && containce == 0) {
-                    Map.Entry<Character, List<String>> entry = iterator.next();
-                    if (entry.getValue().contains(stringBuilder.toString())) {
+                    Map.Entry<Character, List<String>> listEntry = iterator.next();
+                    if (listEntry.getValue().contains(stringBuilder.toString())) {
                         containce = 1;
-                        left = entry.getKey();
+                        left = listEntry.getKey();
                     }
                 }
                 if (containce == 1) {
