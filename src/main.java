@@ -1,116 +1,52 @@
 import java.util.*;
 
 public class main {
-    static Map<Character, List<String>> grammar;
-    static Map<Character, Integer> map;
-    static Integer[][] matrix;
+    static Map<Character, Integer> integerMap = new HashMap<>();
+    static Map<Character, List<String>> characterListMap = new HashMap<>();
+    static Integer[][] precedenceMatrix;
+    static List<String> S = new ArrayList<>();
+    static Stack<Character> stack = new Stack<>();
 
     public main() {
         Scanner in = new Scanner(System.in);
-        String line = in.nextLine();
-        System.out.println(check(line));
+        System.out.println(check(in.nextLine()));
+    }
+
+    private static Integer lookingForRelation(char l, char r) {
+        return precedenceMatrix[integerMap.get(l)][integerMap.get(r)];
     }
 
     public static boolean check(String str) {
-        start();
-        boolean status = false;
-        Stack<Character> stack = new Stack<>();
-        stack.add('#');
-
-        int pointer = 0;
-        str += "#";
-        char[] sentence = str.toCharArray();
-
-
-        if (sentence.length == 1) {
-            return false;
-        }
-        while (pointer <= sentence.length) {
-            char c = sentence[pointer];
-            if (c == '#' && stack.size() == 2 && stack.peek() == 'S') {
-                break;
-            }
-            if (!map.containsKey(c)) {
-                status = true;
-                break;
-            }
-
-            Integer temp = findRelation(stack.peek(), sentence[pointer]);
-            if (temp == null) {
-                status = true;
-                break;
-            }
-            if (temp > 0) {
-                StringBuilder sb = new StringBuilder();
-                char last_l;
-                do {
-                    last_l = stack.pop();
-                    sb.insert(0, last_l);
-                } while (findRelation(stack.peek(), last_l) >= 0);
-                Iterator<Map.Entry<Character, List<String>>> iterator = grammar.entrySet().iterator();
-                boolean found = false;
-                char left = 0;
-                while (iterator.hasNext() && !found) {
-                    Map.Entry<Character, List<String>> entry = iterator.next();
-                    if (entry.getValue().contains(sb.toString())) {
-                        found = true;
-                        left = entry.getKey();
-                    }
-                }
-                if (!found) {
-                    status = true;
-                    break;
-                }
-                stack.add(left);
-            } else {
-                stack.push(c);
-                pointer++;
-            }
-        }
-        StringBuilder builder = new StringBuilder();
-        try {
-            builder.insert(0, stack.pop());
-            builder.insert(0, stack.pop());
-        } catch (EmptyStackException e) {
-            return false;
-        }
-        return !status && builder.toString().equals("#S");
-    }
-
-
-    static void start() {
-        grammar = new HashMap<>();
-        List<String> S = new ArrayList<>();
+        //Создаем грамматику
         S.add("CS");
         S.add("CB");
         S.add("C");
-        grammar.put('S', S);
+        characterListMap.put('S', S);
         List<String> C = new ArrayList<>();
         C.add("A");
-        grammar.put('C', C);
+        characterListMap.put('C', C);
         List<String> A = new ArrayList<>();
         A.add("aA");
         A.add("bA");
         A.add("c");
-        grammar.put('A', A);
+        characterListMap.put('A', A);
         List<String> B = new ArrayList<>();
         B.add("dB");
         B.add("a");
         B.add("d");
-        grammar.put('B', B);
+        characterListMap.put('B', B);
 
-        map = new HashMap<>();
-        map.put('S', 0);
-        map.put('C', 1);
-        map.put('B', 2);
-        map.put('A', 3);
-        map.put('a', 4);
-        map.put('b', 5);
-        map.put('c', 6);
-        map.put('d', 7);
-        map.put('#', 8);
-
-        matrix = new Integer[][]{
+        integerMap.put('S', 0);
+        integerMap.put('C', 1);
+        integerMap.put('B', 2);
+        integerMap.put('A', 3);
+        integerMap.put('a', 4);
+        integerMap.put('b', 5);
+        integerMap.put('c', 6);
+        integerMap.put('d', 7);
+        integerMap.put('#', 8);
+        // Создаем матрицу предшествования
+        precedenceMatrix = new Integer[][]{
                 {null, null, null, null, null, null, null, null, 1},
                 {0, -1, 0, -1, -1, -1, 1, -1, 1},
                 {null, null, null, null, null, null, null, null, 1},
@@ -121,9 +57,66 @@ public class main {
                 {null, null, 0, null, -1, null, null, -1, 1},
                 {-1, -1, -1, -1, -1, -1, -1, -1, null},
         };
+        boolean status = false;
+        stack.add('#');
+        int pointer = 0;
+        str += "#";
+        char[] sentence = str.toCharArray();
+        if (sentence.length == 1) {
+            return false;
+        }
+        while (pointer <= sentence.length) {
+            char symbol = sentence[pointer];
+            if (symbol == '#' && stack.size() == 2 && stack.peek() == 'S') {
+                break;
+            }
+            if (integerMap.containsKey(symbol)) {
+                status = false;
+            } else {
+                status = true;
+                break;
+            }
+            Integer temp = lookingForRelation(stack.peek(), sentence[pointer]);
+            if (temp == null) {
+                status = true;
+                break;
+            }
+            if (temp > 0) {
+                StringBuilder stringBuilder = new StringBuilder();
+                char character = stack.pop();
+                while (lookingForRelation(stack.peek(), character) >= 0) {
+                    character = stack.pop();
+                    stringBuilder.insert(0, character);
+                }
+                Iterator<Map.Entry<Character, List<String>>> iterator = characterListMap.entrySet().iterator();
+                int containce = 0;
+                char left = 0;
+                while (iterator.hasNext() && containce == 0) {
+                    Map.Entry<Character, List<String>> entry = iterator.next();
+                    if (entry.getValue().contains(stringBuilder.toString())) {
+                        containce = 1;
+                        left = entry.getKey();
+                    }
+                }
+                if (containce == 1) {
+                    status = true;
+                    break;
+                }
+                stack.add(left);
+            } else {
+                pointer++;
+                stack.push(symbol);
+            }
+        }
+        StringBuilder builder = new StringBuilder();
+        try {
+            builder.insert(0, stack.pop());
+            builder.insert(0, stack.pop());
+        } catch (EmptyStackException e) {
+            return false;
+        }
+
+        return !status && builder.toString().equals("#S");
     }
 
-    private static Integer findRelation(char left, char right) {
-        return matrix[map.get(left)][map.get(right)];
-    }
 }
