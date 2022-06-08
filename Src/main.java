@@ -67,9 +67,6 @@ public class main {
         }
         while (pointer <= sentence.length) {
             char symbol = sentence[pointer];
-            if (symbol == '#' && stack.size() == 2 && stack.peek() == 'S') {
-                break;
-            }
             if (integerMap.containsKey(symbol)) {
                 status = false;
             } else {
